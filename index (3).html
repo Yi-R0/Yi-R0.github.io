@@ -23,8 +23,6 @@
     --move-bg:#FAEAE8;
     --routine:#7A8094;
     --routine-bg:#EEEFF3;
-    --extra:#2C9E9E;
-    --extra-bg:#EAF7F7;
   }
   *{box-sizing:border-box;}
   body{
@@ -255,86 +253,6 @@
     .block{grid-template-columns:80px 1fr;}
   }
 
-  /* --- Side panels (scratchpad + quick add-to-today) --- */
-  .side-panel{
-    position:fixed;
-    top:96px;
-    width:190px;
-    max-height:calc(100vh - 130px);
-    overflow-y:auto;
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:12px;
-    padding:14px 16px;
-    font-size:0.85rem;
-    display:none;
-    z-index:15;
-    box-sizing:border-box;
-  }
-  /* Content column is max-width:900px, centred — so its edge sits at 50% - 450px.
-     656px = 450px (half the content width) + 190px (panel width) + 16px (gap),
-     guaranteeing a real 16px gap between the panel and the content at any width
-     where the panel is shown at all. Capped at 320px so it doesn't drift too far
-     from the content on ultra-wide monitors. */
-  .side-left{left:clamp(16px, calc(50% - 656px), 320px);}
-  .side-right{right:clamp(16px, calc(50% - 656px), 320px);}
-  @media(min-width:1360px){
-    .side-panel{display:block;}
-  }
-  .side-panel h4{margin:0 0 4px;font-size:0.9rem;}
-  .side-panel .side-sub{margin:0 0 10px;font-size:0.75rem;color:var(--muted);}
-  #scratchpadText{
-    width:100%;
-    min-height:220px;
-    resize:vertical;
-    border:1px solid var(--line);
-    border-radius:8px;
-    padding:8px;
-    font-family:inherit;
-    font-size:0.85rem;
-    box-sizing:border-box;
-  }
-  .quick-add{display:flex;gap:6px;margin-bottom:10px;}
-  .quick-add input{
-    flex:1;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:0.82rem;min-width:0;
-  }
-  .quick-add button{
-    border:none;background:var(--ink);color:#fff;border-radius:8px;padding:6px 10px;font-size:0.82rem;cursor:pointer;flex:none;
-  }
-  .quick-list{list-style:none;margin:0 0 10px;padding:0;}
-  .quick-list li{
-    display:flex;justify-content:space-between;align-items:center;gap:6px;
-    padding:6px 0;border-bottom:1px solid var(--line);font-size:0.82rem;
-  }
-  .quick-list li:last-child{border-bottom:none;}
-  .quick-list li.done span{text-decoration:line-through;color:var(--muted);}
-  .quick-list li span{word-break:break-word;}
-  .quick-list .del-quick{background:none;border:none;color:var(--muted);font-size:0.95rem;cursor:pointer;flex:none;padding:0 2px;}
-  .ghost-btn{
-    width:100%;font-size:0.78rem;color:var(--ink);background:var(--paper);
-    border:1px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;
-  }
-  .ghost-btn:hover{background:#fff;}
-
-  /* --- Extra (user-added, resets daily) blocks --- */
-  .block-extra{
-    border-left-color:var(--extra);
-    background:var(--extra-bg);
-    position:relative;
-    padding-right:34px;
-  }
-  .block-extra .del-extra{
-    position:absolute;
-    right:10px;top:6px;
-    background:none;border:none;
-    color:var(--muted);
-    font-size:1.05rem;
-    line-height:1;
-    cursor:pointer;
-    padding:2px 4px;
-  }
-  .block-extra .del-extra:hover{color:var(--ink);}
-
   /* --- Floating quick-nav buttons --- */
   .float-nav{
     position:fixed;
@@ -352,23 +270,6 @@
 </style>
 </head>
 <body>
-
-<aside class="side-panel side-left" id="scratchPanel">
-  <h4>📝 Scratchpad</h4>
-  <p class="side-sub">Stays here permanently until you clear it — general notes, nothing to do with the schedule.</p>
-  <textarea id="scratchpadText" placeholder="Jot anything down…"></textarea>
-</aside>
-
-<aside class="side-panel side-right" id="quickPanel">
-  <h4>➕ Add to today</h4>
-  <p class="side-sub">Drops a new tickable item into today's list only. Clears itself automatically tomorrow.</p>
-  <div class="quick-add">
-    <input type="text" id="quickAddInput" placeholder="e.g. Do all HW">
-    <button id="quickAddBtn" type="button">Add</button>
-  </div>
-  <ul class="quick-list" id="quickList"></ul>
-  <button id="quickResetBtn" type="button" class="ghost-btn">Reset today's extras</button>
-</aside>
 
 <div class="float-nav">
   <button id="gotoTodayBtn" type="button" title="Jump to today">📅</button>
@@ -426,7 +327,6 @@
     <div class="chip"><span class="dot" style="background:var(--move)"></span>Workout / MMA</div>
     <div class="chip"><span class="dot" style="background:var(--routine)"></span>Meals / routine</div>
     <div class="chip"><span class="dot" style="background:var(--line)"></span>Free / rest</div>
-    <div class="chip"><span class="dot" style="background:var(--extra)"></span>Added today</div>
   </div>
 
   <div class="notes">
@@ -759,182 +659,10 @@
     setInterval(() => { tickNextPrayer(); tickNextTask(); }, 15000);
   }
 
-  function escapeHtml(str){
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
 
   function todayDayName(){
     const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
     return dayNames[new Date().getDay()];
-  }
-
-  function todayDateKey(){
-    const d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-  }
-
-  // --- "Add to today" extras: tied to today's date only, auto-clear on a new day ---
-  const EXTRAS_KEY = 'yaqoob-daily-extras-v1';
-  let extrasItems = [];
-
-  function loadExtras(){
-    try{
-      const raw = localStorage.getItem(EXTRAS_KEY);
-      if(raw){
-        const parsed = JSON.parse(raw);
-        if(parsed && parsed.date === todayDateKey() && Array.isArray(parsed.items)){
-          return parsed.items;
-        }
-      }
-    }catch(e){
-      console.error('Could not load extras:', e);
-    }
-    return []; // either nothing saved yet, or it's a new day — start fresh
-  }
-
-  function saveExtras(){
-    try{
-      localStorage.setItem(EXTRAS_KEY, JSON.stringify({ date: todayDateKey(), items: extrasItems }));
-    }catch(e){
-      console.error('Could not save extras:', e);
-    }
-  }
-
-  function renderTodayExtras(){
-    const dayEl = document.querySelector('.day[data-day="' + todayDayName() + '"]');
-    if(!dayEl) return;
-    const blocksWrap = dayEl.querySelector('.blocks');
-    dayEl.querySelectorAll('.block-extra').forEach(b => b.remove());
-
-    extrasItems.forEach(item => {
-      const block = document.createElement('div');
-      block.className = 'block block-extra' + (item.done ? ' done' : '');
-
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.className = 'chk';
-      cb.checked = !!item.done;
-      cb.setAttribute('aria-label', 'Mark as done');
-      cb.addEventListener('change', () => {
-        item.done = cb.checked;
-        block.classList.toggle('done', cb.checked);
-        saveExtras();
-        renderQuickList();
-        updateProgress(dayEl);
-        tickNextTask();
-      });
-
-      const timeDiv = document.createElement('div');
-      timeDiv.className = 'time';
-      timeDiv.textContent = 'Added';
-
-      const whatDiv = document.createElement('div');
-      whatDiv.className = 'what';
-      whatDiv.innerHTML = '<b>' + escapeHtml(item.text) + '</b>';
-
-      const delBtn = document.createElement('button');
-      delBtn.type = 'button';
-      delBtn.className = 'del-extra';
-      delBtn.title = 'Remove';
-      delBtn.textContent = '×';
-      delBtn.addEventListener('click', () => {
-        extrasItems = extrasItems.filter(i => i.id !== item.id);
-        saveExtras();
-        renderTodayExtras();
-        renderQuickList();
-        updateProgress(dayEl);
-        tickNextTask();
-      });
-
-      block.appendChild(cb);
-      block.appendChild(timeDiv);
-      block.appendChild(whatDiv);
-      block.appendChild(delBtn);
-      blocksWrap.appendChild(block);
-    });
-
-    updateProgress(dayEl);
-  }
-
-  function renderQuickList(){
-    const ul = document.getElementById('quickList');
-    if(!ul) return;
-    ul.innerHTML = extrasItems.map(item =>
-      '<li class="' + (item.done ? 'done' : '') + '">'
-      + '<span>' + escapeHtml(item.text) + '</span>'
-      + '<button class="del-quick" type="button" data-id="' + item.id + '">×</button>'
-      + '</li>'
-    ).join('');
-    ul.querySelectorAll('.del-quick').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.dataset.id;
-        extrasItems = extrasItems.filter(i => i.id !== id);
-        saveExtras();
-        renderQuickList();
-        renderTodayExtras();
-        tickNextTask();
-      });
-    });
-  }
-
-  function addQuickItem(){
-    const input = document.getElementById('quickAddInput');
-    if(!input) return;
-    const text = input.value.trim();
-    if(!text) return;
-    extrasItems.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2, 7), text, done: false });
-    saveExtras();
-    input.value = '';
-    renderQuickList();
-    renderTodayExtras();
-    tickNextTask();
-  }
-
-  function initQuickAdd(){
-    extrasItems = loadExtras();
-    saveExtras(); // writes today's date so tomorrow's load correctly sees a stale date and clears
-    renderQuickList();
-    renderTodayExtras();
-
-    const addBtn = document.getElementById('quickAddBtn');
-    const input = document.getElementById('quickAddInput');
-    if(addBtn) addBtn.addEventListener('click', addQuickItem);
-    if(input) input.addEventListener('keydown', (ev) => {
-      if(ev.key === 'Enter'){ ev.preventDefault(); addQuickItem(); }
-    });
-
-    const resetBtn = document.getElementById('quickResetBtn');
-    if(resetBtn) resetBtn.addEventListener('click', () => {
-      if(!confirm("Remove all of today's added extras?")) return;
-      extrasItems = [];
-      saveExtras();
-      renderQuickList();
-      renderTodayExtras();
-      tickNextTask();
-    });
-  }
-
-  // --- Scratchpad: persistent free-text notes, unrelated to the schedule ---
-  const SCRATCH_KEY = 'yaqoob-scratchpad-v1';
-  function initScratchpad(){
-    const ta = document.getElementById('scratchpadText');
-    if(!ta) return;
-    try{
-      const saved = localStorage.getItem(SCRATCH_KEY);
-      if(saved !== null) ta.value = saved;
-    }catch(e){
-      console.error('Could not load scratchpad:', e);
-    }
-    let scratchTimer = null;
-    ta.addEventListener('input', () => {
-      clearTimeout(scratchTimer);
-      scratchTimer = setTimeout(() => {
-        try{ localStorage.setItem(SCRATCH_KEY, ta.value); }
-        catch(e){ console.error('Could not save scratchpad:', e); }
-      }, 400);
-    });
   }
 
   // --- Floating quick-nav buttons ---
@@ -953,8 +681,6 @@
   function init(){
     loadPrayerTimes();
     startLiveBar();
-    initQuickAdd();
-    initScratchpad();
     initFloatNav();
 
     try{
@@ -977,7 +703,6 @@
       const blocks = dayEl.querySelectorAll('.block');
 
       blocks.forEach((block, i) => {
-        if(block.classList.contains('block-extra')) return;
         const id = dayName + '-' + i;
 
         const cb = document.createElement('input');
