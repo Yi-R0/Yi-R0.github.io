@@ -33,6 +33,46 @@
     line-height:1.5;
   }
   .wrap{max-width:900px;margin:0 auto;padding:32px 20px 60px;}
+
+  .live-bar{
+    position:sticky;
+    top:0;
+    z-index:20;
+    display:flex;
+    gap:0;
+    background:var(--ink);
+    color:#fff;
+    padding:10px 16px;
+    margin:0 auto;
+    max-width:900px;
+    border-radius:0 0 12px 12px;
+    box-shadow:0 4px 14px rgba(27,36,57,0.25);
+  }
+  .live-item{
+    flex:1;
+    text-align:center;
+    padding:0 8px;
+    border-right:1px solid rgba(255,255,255,0.15);
+  }
+  .live-item:last-child{border-right:none;}
+  .live-label{
+    display:block;
+    font-size:0.68rem;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    color:#B8BEDA;
+    margin-bottom:2px;
+  }
+  .live-value{
+    display:block;
+    font-size:0.92rem;
+    font-weight:700;
+  }
+  @media(max-width:520px){
+    .live-bar{padding:8px 10px;border-radius:0;}
+    .live-label{font-size:0.6rem;}
+    .live-value{font-size:0.78rem;}
+  }
   header{margin-bottom:28px;}
   h1{
     font-size:1.9rem;
@@ -216,6 +256,21 @@
 </head>
 <body>
 <div class="wrap">
+
+  <div class="live-bar" id="liveBar">
+    <div class="live-item">
+      <span class="live-label">Now</span>
+      <span class="live-value" id="clockValue">--:--:--</span>
+    </div>
+    <div class="live-item">
+      <span class="live-label">Next prayer</span>
+      <span class="live-value" id="nextPrayerValue">loading…</span>
+    </div>
+    <div class="live-item">
+      <span class="live-label">Next task</span>
+      <span class="live-value" id="nextTaskValue">loading…</span>
+    </div>
+  </div>
 
   <header>
     <h1>Yaqoob — Y13 Weekly Timetable</h1>
@@ -418,6 +473,9 @@
   // used only to sort "which prayer is next", not to change what's displayed.
   const PRAYER_IS_PM = [false, true, true, true, true];
 
+  // Filled in once SLIC's times load successfully; the live countdown bar reads from this.
+  let prayerMinsList = null;
+
   function renderPrayerTimes(rawTimes, label){
     const now = new Date();
     const nowMins = now.getHours() * 60 + now.getMinutes();
@@ -427,6 +485,7 @@
       if(PRAYER_IS_PM[i] && h !== 12) h += 12;
       return h * 60 + m;
     });
+    prayerMinsList = minsList;
 
     let nextIndex = -1;
     for(let i = 0; i < minsList.length; i++){
@@ -493,8 +552,95 @@
     if(tag) tag.textContent = done + '/' + blocks.length + ' done';
   }
 
+  function formatCountdown(mins){
+    if(mins < 1) return 'now';
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if(h === 0) return m + 'm';
+    return h + 'h ' + m + 'm';
+  }
+
+  function tickClock(){
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    const ss = String(now.getSeconds()).padStart(2,'0');
+    const el = document.getElementById('clockValue');
+    if(el) el.textContent = hh + ':' + mm + ':' + ss;
+  }
+
+  function tickNextPrayer(){
+    const el = document.getElementById('nextPrayerValue');
+    if(!el) return;
+    if(!prayerMinsList){
+      el.textContent = 'loading…';
+      return;
+    }
+    const now = new Date();
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+    let nextIndex = -1;
+    for(let i = 0; i < prayerMinsList.length; i++){
+      if(prayerMinsList[i] > nowMins){ nextIndex = i; break; }
+    }
+    if(nextIndex === -1){
+      el.textContent = 'Isha passed — Fajr tomorrow';
+      return;
+    }
+    const diff = prayerMinsList[nextIndex] - nowMins;
+    el.textContent = PRAYER_NAMES[nextIndex] + ' in ' + formatCountdown(diff);
+  }
+
+  function tickNextTask(){
+    const el = document.getElementById('nextTaskValue');
+    if(!el) return;
+
+    const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    const now = new Date();
+    const todayName = dayNames[now.getDay()];
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+
+    const dayEl = document.querySelector('.day[data-day="' + todayName + '"]');
+    if(!dayEl){
+      el.textContent = '—';
+      return;
+    }
+
+    const blocks = Array.from(dayEl.querySelectorAll('.block'));
+    let best = null;
+
+    blocks.forEach(block => {
+      if(block.classList.contains('done')) return;
+      const timeEl = block.querySelector('.time');
+      const whatEl = block.querySelector('.what');
+      if(!timeEl) return;
+      const match = timeEl.textContent.match(/(\d{1,2}):(\d{2})/);
+      if(!match) return;
+      const mins = parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+      if(mins <= nowMins) return;
+      if(best === null || mins < best.mins){
+        const label = whatEl ? whatEl.textContent.trim().split('\n')[0].slice(0, 40) : 'task';
+        best = { mins, label };
+      }
+    });
+
+    if(!best){
+      el.textContent = 'All done for today 🎉';
+      return;
+    }
+    el.textContent = best.label + ' in ' + formatCountdown(best.mins - nowMins);
+  }
+
+  function startLiveBar(){
+    tickClock();
+    tickNextPrayer();
+    tickNextTask();
+    setInterval(tickClock, 1000);
+    setInterval(() => { tickNextPrayer(); tickNextTask(); }, 15000);
+  }
+
   function init(){
     loadPrayerTimes();
+    startLiveBar();
 
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -531,6 +677,7 @@
           block.classList.toggle('done', cb.checked);
           updateProgress(dayEl);
           queueSave();
+          tickNextTask();
         });
         block.insertBefore(cb, block.firstChild);
 
