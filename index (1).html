@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Y13 Timetable — Yaqoob</title>
+<style>
+  :root{
+    --ink:#1B2439;
+    --paper:#F4F5F9;
+    --card:#FFFFFF;
+    --line:#E2E4EC;
+    --muted:#6B7185;
+    --maths:#2F6FA8;
+    --maths-bg:#EAF1F8;
+    --chem:#2E8A66;
+    --chem-bg:#E9F5EF;
+    --econ:#B4862B;
+    --econ-bg:#FAF2E1;
+    --prayer:#7C5FB0;
+    --prayer-bg:#F1ECF9;
+    --move:#B4423A;
+    --move-bg:#FAEAE8;
+    --routine:#7A8094;
+    --routine-bg:#EEEFF3;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Segoe UI',ui-sans-serif,system-ui,-apple-system,sans-serif;
+    line-height:1.5;
+  }
+  .wrap{max-width:900px;margin:0 auto;padding:32px 20px 60px;}
+
+  .live-bar{
+    position:sticky;
+    top:0;
+    z-index:20;
+    display:flex;
+    gap:0;
+    background:var(--ink);
+    color:#fff;
+    padding:10px 16px;
+    margin:0 auto;
+    max-width:900px;
+    border-radius:0 0 12px 12px;
+    box-shadow:0 4px 14px rgba(27,36,57,0.25);
+  }
+  .live-item{
+    flex:1;
+    text-align:center;
+    padding:0 8px;
+    border-right:1px solid rgba(255,255,255,0.15);
+  }
+  .live-item:last-child{border-right:none;}
+  .live-label{
+    display:block;
+    font-size:0.68rem;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    color:#B8BEDA;
+    margin-bottom:2px;
+  }
+  .live-value{
+    display:block;
+    font-size:0.92rem;
+    font-weight:700;
+  }
+  @media(max-width:520px){
+    .live-bar{padding:8px 10px;border-radius:0;}
+    .live-label{font-size:0.6rem;}
+    .live-value{font-size:0.78rem;}
+  }
+  header{margin-bottom:28px;}
+  h1{
+    font-size:1.9rem;
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+  }
+  .sub{color:var(--muted);font-size:0.98rem;margin:0 0 18px;}
+  .goal{
+    background:var(--ink);
+    color:#fff;
+    border-radius:10px;
+    padding:14px 18px;
+    font-size:0.95rem;
+    display:flex;
+    gap:10px;
+    align-items:baseline;
+    flex-wrap:wrap;
+  }
+  .goal b{font-weight:600;}
+  .goal span.dim{color:#B8BEDA;}
+
+  .toolbar{
+    display:flex;align-items:center;gap:12px;
+    margin-top:14px;flex-wrap:wrap;
+  }
+  .save-status{font-size:0.8rem;color:var(--muted);}
+  .save-status.saved{color:var(--chem);}
+  #resetBtn{
+    font-size:0.82rem;
+    color:var(--ink);
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:6px 14px;
+    cursor:pointer;
+  }
+  #resetBtn:hover{background:var(--paper);}
+  .hint{font-size:0.82rem;color:var(--muted);margin:10px 0 0;}
+
+  .prayer-card{
+    margin-top:12px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:14px 18px;
+  }
+  .prayer-card h3{
+    margin:0 0 4px;
+    font-size:0.95rem;
+  }
+  .prayer-card .loc{
+    font-size:0.78rem;
+    color:var(--muted);
+    margin:0 0 10px;
+  }
+  .prayer-grid{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:8px;
+  }
+  .prayer-slot{
+    text-align:center;
+    background:var(--paper);
+    border-radius:8px;
+    padding:8px 4px;
+  }
+  .prayer-slot.next{
+    background:var(--prayer-bg);
+    border:1px solid #E1D6F0;
+  }
+  .prayer-slot .pname{
+    font-size:0.78rem;
+    color:var(--muted);
+    font-weight:600;
+  }
+  .prayer-slot .ptime{
+    font-size:0.95rem;
+    font-weight:700;
+    margin-top:2px;
+  }
+  @media(max-width:520px){
+    .prayer-grid{grid-template-columns:repeat(5,1fr);gap:5px;}
+    .prayer-slot{padding:6px 2px;}
+    .prayer-slot .ptime{font-size:0.82rem;}
+  }
+
+  .progress{font-weight:600;color:var(--ink);}
+
+  .legend{
+    display:flex;flex-wrap:wrap;gap:10px;
+    margin:22px 0 8px;
+  }
+  .chip{
+    display:flex;align-items:center;gap:6px;
+    font-size:0.82rem;color:var(--muted);
+    background:var(--card);border:1px solid var(--line);
+    padding:5px 10px;border-radius:20px;
+  }
+  .dot{width:9px;height:9px;border-radius:50%;flex:none;}
+
+  .notes{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px 18px;
+    margin:22px 0 30px;
+    font-size:0.92rem;
+  }
+  .notes h3{margin:0 0 8px;font-size:0.95rem;}
+  .notes ul{margin:0;padding-left:20px;}
+  .notes li{margin-bottom:6px;}
+  .notes li:last-child{margin-bottom:0;}
+
+  .day{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    margin-bottom:16px;
+    overflow:hidden;
+  }
+  .day-head{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:14px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  .day-head h2{margin:0;font-size:1.15rem;}
+  .day-head .tag{font-size:0.82rem;color:var(--muted);}
+  .blocks{padding:6px 0;}
+  .block{
+    display:grid;
+    grid-template-columns:24px 100px 1fr;
+    gap:10px;
+    padding:9px 18px;
+    border-left:4px solid transparent;
+    align-items:start;
+  }
+  .block .chk{
+    margin-top:3px;
+    width:16px;height:16px;
+    accent-color:var(--ink);
+    cursor:pointer;
+  }
+  .block .time{font-size:0.85rem;color:var(--muted);white-space:nowrap;padding-top:1px;}
+  .block .what b{font-weight:600;}
+  .block .what .note{display:block;color:var(--muted);font-size:0.83rem;margin-top:1px;}
+
+  .block .time,
+  .block .what{
+    border-radius:4px;
+    outline:none;
+  }
+  .block .time:hover,
+  .block .what:hover{
+    box-shadow:0 0 0 1px var(--line);
+  }
+  .block .time:focus,
+  .block .what:focus{
+    box-shadow:0 0 0 2px var(--ink);
+    background:rgba(255,255,255,0.6);
+  }
+
+  .block.done{opacity:0.5;}
+  .block.done .time,
+  .block.done .what b,
+  .block.done .what{text-decoration:line-through;text-decoration-color:var(--muted);}
+
+  .b-maths{border-left-color:var(--maths);background:var(--maths-bg);}
+  .b-chem{border-left-color:var(--chem);background:var(--chem-bg);}
+  .b-econ{border-left-color:var(--econ);background:var(--econ-bg);}
+  .b-prayer{border-left-color:var(--prayer);background:var(--prayer-bg);}
+  .b-move{border-left-color:var(--move);background:var(--move-bg);}
+  .b-routine{border-left-color:var(--routine);background:var(--routine-bg);}
+  .b-free{border-left-color:var(--line);}
+
+  footer{margin-top:24px;color:var(--muted);font-size:0.85rem;}
+
+  @media(max-width:520px){
+    .block{grid-template-columns:80px 1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="live-bar" id="liveBar">
+    <div class="live-item">
+      <span class="live-label">Now</span>
+      <span class="live-value" id="clockValue">--:--:--</span>
+    </div>
+    <div class="live-item">
+      <span class="live-label">Next prayer</span>
+      <span class="live-value" id="nextPrayerValue">loading…</span>
+    </div>
+    <div class="live-item">
+      <span class="live-label">Next task</span>
+      <span class="live-value" id="nextTaskValue">loading…</span>
+    </div>
+  </div>
+
+  <header>
+    <h1>Yaqoob — Y13 Weekly Timetable</h1>
+    <p class="sub">Maths (E) · Chemistry (E) · Economics (C) — targeting the strongest possible grades for a Level 6 route</p>
+    <div class="goal">
+      <b>The plan:</b>
+      <span>Level 3 apprenticeship = the guaranteed lifeline.</span>
+      <span class="dim">Level 6 in finance or engineering = the target this timetable is built for.</span>
+    </div>
+    <div class="prayer-card" id="prayerCard">
+      <h3>Today's prayer times</h3>
+      <p class="loc" id="prayerLoc">Loading…</p>
+      <div class="prayer-grid" id="prayerGrid">
+        <div class="prayer-slot"><div class="pname">Fajr</div><div class="ptime">—</div></div>
+        <div class="prayer-slot"><div class="pname">Dhuhr</div><div class="ptime">—</div></div>
+        <div class="prayer-slot"><div class="pname">Asr</div><div class="ptime">—</div></div>
+        <div class="prayer-slot"><div class="pname">Maghrib</div><div class="ptime">—</div></div>
+        <div class="prayer-slot"><div class="pname">Isha</div><div class="ptime">—</div></div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <span id="saveStatus" class="save-status">loading your saved changes…</span>
+      <button id="resetBtn" type="button">Reset this week's ticks</button>
+    </div>
+    <p class="hint">Tap any checkbox to tick off a block. Click into a time or activity to edit the wording — it saves automatically on this device.</p>
+  </header>
+
+  <div class="legend">
+    <div class="chip"><span class="dot" style="background:var(--maths)"></span>Maths</div>
+    <div class="chip"><span class="dot" style="background:var(--chem)"></span>Chemistry</div>
+    <div class="chip"><span class="dot" style="background:var(--econ)"></span>Economics</div>
+    <div class="chip"><span class="dot" style="background:var(--prayer)"></span>Prayer</div>
+    <div class="chip"><span class="dot" style="background:var(--move)"></span>Workout / MMA</div>
+    <div class="chip"><span class="dot" style="background:var(--routine)"></span>Meals / routine</div>
+    <div class="chip"><span class="dot" style="background:var(--line)"></span>Free / rest</div>
+  </div>
+
+  <div class="notes">
+    <h3>Before you use this</h3>
+    <ul>
+      <li><b>Prayer times shift daily.</b> The five prayer blocks below are placed where they fall in early September — check a prayer times app for your area and nudge the block times as the year moves on, especially Maghrib and Isha, which get earlier through autumn.</li>
+      <li><b>Fajr on weekends:</b> set an alarm for the actual Fajr time even on Saturday/Sunday, pray, then go back to sleep if you want the lie-in — don't let the weekend wake-up time replace it.</li>
+      <li><b>Jummah on Friday:</b> your Period 4 Maths (12:05–13:05) may clash with Friday prayer depending on your mosque's timing. Worth checking with your college's pastoral/faith team this week about how they handle this — most colleges have a process.</li>
+      <li><b>Your college day already has big free periods</b> — Wednesday from 12:30 and Tuesday 11:05–14:20 especially. Use them for topic review and past-paper questions so your evenings stay lighter and you can actually hit that 21:30 bedtime.</li>
+      <li>Maths and Chemistry get the most slots since they're your weakest — Economics gets protected time to push the C higher, since it's your strongest evidence for a Level 6 application.</li>
+    </ul>
+  </div>
+
+  <!-- MONDAY -->
+  <div class="day" data-day="monday">
+    <div class="day-head"><h2>Monday</h2><span class="tag">College 08:30–16:20 · free ~14:00–16:20 · <span class="progress"></span></span></div>
+    <div class="blocks">
+      <div class="block b-prayer"><div class="time">05:30</div><div class="what"><b>Wake + Fajr</b><span class="note">check exact time — get ready after</span></div></div>
+      <div class="block b-free"><div class="time">06:00–07:45</div><div class="what"><b>Optional light review</b><span class="note">flexible — Quran or a quick flashcard pass, not compulsory</span></div></div>
+      <div class="block b-routine"><div class="time">08:30–16:20</div><div class="what"><b>College</b> — Maths, Chemistry, Economics ×2<span class="note">free from ~14:00: use for Maths/Chem flashcards + past-paper questions</span></div></div>
+      <div class="block b-routine"><div class="time">16:20–16:50</div><div class="what">Commute home</div></div>
+      <div class="block b-prayer"><div class="time">16:50–17:15</div><div class="what">Asr + break</div></div>
+      <div class="block b-maths"><div class="time">17:15–18:15</div><div class="what"><b>Study: Maths</b><span class="note">weakest subject — priority</span></div></div>
+      <div class="block b-move"><div class="time">18:15–18:45</div><div class="what"><b>Workout</b> (30 min)</div></div>
+      <div class="block b-routine"><div class="time">18:45–19:30</div><div class="what">Dinner + family time</div></div>
+      <div class="block b-prayer"><div class="time">19:30–19:50</div><div class="what">Maghrib</div></div>
+      <div class="block b-econ"><div class="time">19:50–20:30</div><div class="what"><b>Study: Economics</b><span class="note">protect the C — push toward B</span></div></div>
+      <div class="block b-prayer"><div class="time">20:30–20:50</div><div class="what">Isha</div></div>
+      <div class="block b-free"><div class="time">20:50–21:30</div><div class="what">Wind down, no screens<span class="note">bed by 21:30 (target) / 22:30 (fallback)</span></div></div>
+    </div>
+  </div>
+
+  <!-- TUESDAY -->
+  <div class="day" data-day="tuesday">
+    <div class="day-head"><h2>Tuesday</h2><span class="tag">College 08:30–16:20 · free ~11:05–14:20 &amp; after 15:20 · <span class="progress"></span></span></div>
+    <div class="blocks">
+      <div class="block b-prayer"><div class="time">05:30</div><div class="what"><b>Wake + Fajr</b></div></div>
+      <div class="block b-free"><div class="time">06:00–07:45</div><div class="what">Optional light review</div></div>
+      <div class="block b-routine"><div class="time">08:30–16:20</div><div class="what">College — Chemistry, Maths, Economics<span class="note">big free block 11:05–14:20: past papers, Chem/Maths — grab lunch inside it</span></div></div>
+      <div class="block b-routine"><div class="time">16:20–16:50</div><div class="what">Commute home</div></div>
+      <div class="block b-prayer"><div class="time">16:50–17:15</div><div class="what">Asr + break</div></div>
+      <div class="block b-chem"><div class="time">17:15–18:15</div><div class="what"><b>Study: Chemistry</b><span class="note">weakest subject — priority</span></div></div>
+      <div class="block b-maths"><div class="time">18:15–18:45</div><div class="what"><b>Study: Maths</b> (extra)</div></div>
+      <div class="block b-routine"><div class="time">18:45–19:30</div><div class="what">Dinner</div></div>
+      <div class="block b-prayer"><div class="time">19:30–19:50</div><div class="what">Maghrib</div></div>
+      <div class="block b-free"><div class="time">19:50–20:30</div><div class="what">Light review / flashcards — any subject</div></div>
+      <div class="block b-prayer"><div class="time">20:30–20:50</div><div class="what">Isha</div></div>
+      <div class="block b-free"><div class="time">20:50–21:30</div><div class="what">Wind down, bed by 21:30 / 22:30</div></div>
+    </div>
+  </div>
+
+  <!-- WEDNESDAY -->
+  <div class="day" data-day="wednesday">
+    <div class="day-head"><h2>Wednesday</h2><span class="tag">College 08:30–16:20 · free from 12:30 · <span class="progress"></span></span></div>
+    <div class="blocks">
+      <div class="block b-prayer"><div class="time">05:30</div><div class="what"><b>Wake + Fajr</b></div></div>
+      <div class="block b-free"><div class="time">06:00–07:45</div><div class="what">Optional light review</div></div>
+      <div class="block b-routine"><div class="time">08:30–16:20</div><div class="what">College — Maths, Economics, Chemistry<span class="note">big free block from 12:30: two past-paper sessions with a proper break between</span></div></div>
+      <div class="block b-routine"><div class="time">16:20–16:50</div><div class="what">Commute home</div></div>
+      <div class="block b-prayer"><div class="time">16:50–17:15</div><div class="what">Asr + break</div></div>
+      <div class="block b-maths"><div class="time">17:15–18:15</div><div class="what"><b>Study: Maths or Chemistry</b><span class="note">whichever needs it more this week</span></div></div>
+      <div class="block b-move"><div class="time">18:15–18:45</div><div class="what"><b>Workout</b> (30 min)</div></div>
+      <div class="block b-routine"><div class="time">18:45–19:30</div><div class="what">Dinner</div></div>
+      <div class="block b-prayer"><div class="time">19:30–19:50</div><div class="what">Maghrib</div></div>
+      <div class="block b-econ"><div class="time">19:50–20:30</div><div class="what"><b>Study: Economics</b></div></div>
+      <div class="block b-prayer"><div class="time">20:30–20:50</div><div class="what">Isha</div></div>
+      <div class="block b-free"><div class="time">20:50–21:30</div><div class="what">Wind down, bed by 21:30 / 22:30</div></div>
+    </div>
+  </div>
+
+  <!-- THURSDAY -->
+  <div class="day" data-day="thursday">
+    <div class="day-head"><h2>Thursday</h2><span class="tag">College 08:30–16:20 · free before 11:05 &amp; mid-afternoon · <span class="progress"></span></span></div>
+    <div class="blocks">
+      <div class="block b-prayer"><div class="time">05:30</div><div class="what"><b>Wake + Fajr</b></div></div>
+      <div class="block b-free"><div class="time">06:00–07:45</div><div class="what">Optional light review</div></div>
+      <div class="block b-routine"><div class="time">08:30–16:20</div><div class="what">College — Chemistry, Maths<span class="note">free morning before 11:05: organise notes / flashcards</span></div></div>
+      <div class="block b-routine"><div class="time">16:20–16:50</div><div class="what">Commute home</div></div>
+      <div class="block b-prayer"><div class="time">16:50–17:15</div><div class="what">Asr + break</div></div>
+      <div class="block b-chem"><div class="time">17:15–18:15</div><div class="what"><b>Study: Chemistry</b><span class="note">timed past-paper section</span></div></div>
+      <div class="block b-maths"><div class="time">18:15–18:45</div><div class="what"><b>Study: Maths</b> (extra)</div></div>
+      <div class="block b-routine"><div class="time">18:45–19:30</div><div class="what">Dinner</div></div>
+      <div class="block b-prayer"><div class="time">19:30–19:50</div><div class="what">Maghrib</div></div>
+      <div class="block b-free"><div class="time">19:50–20:30</div><div class="what">Review / flashcards</div></div>
+      <div class="block b-prayer"><div class="time">20:30–20:50</div><div class="what">Isha</div></div>
+      <div class="block b-free"><div class="time">20:50–21:30</div><div class="what">Wind down, bed by 21:30 / 22:30</div></div>
+    </div>
+  </div>
+
+  <!-- FRIDAY -->
+  <div class="day" data-day="friday">
+    <div class="day-head"><h2>Friday</h2><span class="tag">College 08:30–~15:05 · MMA 19:30–21:00 · <span class="progress"></span></span></div>
+    <div class="blocks">
+      <div class="block b-prayer"><div class="time">05:30</div><div class="what"><b>Wake + Fajr</b></div></div>
+      <div class="block b-free"><div class="time">06:00–07:45</div><div class="what">Optional light review</div></div>
+      <div class="block b-routine"><div class="time">08:30–15:05</div><div class="what">College — Economics, Maths, Chemistry<span class="note">check Jummah timing against Period 4 (12:05–13:05) with college pastoral team</span></div></div>
+      <div class="block b-routine"><div class="time">15:05–15:35</div><div class="what">Commute home</div></div>
+      <div class="block b-prayer"><div class="time">15:35–16:00</div><div class="what">Asr + break</div></div>
+      <div class="block b-free"><div class="time">16:00–17:00</div><div class="what">Light review<span class="note">no heavy study today — MMA tonight</span></div></div>
+      <div class="block b-routine"><div class="time">17:00–18:30</div><div class="what">Dinner, rest, prep for MMA</div></div>
+      <div class="block b-prayer"><div class="time">18:30–19:00</div><div class="what">Maghrib</div></div>
+      <div class="block b-routine"><div class="time">19:00–19:30</div><div class="what">Travel to MMA</div></div>
+      <div class="block b-move"><div class="time">19:30–21:00</div><div class="what"><b>MMA</b> 🥋</div></div>
+      <div class="block b-routine"><div class="time">21:00–21:30</div><div class="what">Travel home + shower</div></div>
+      <div class="block b-prayer"><div class="time">21:30–22:00</div><div class="what">Isha</div></div>
+      <div class="block b-free"><div class="time">22:00–23:30</div><div class="what">Wind down, bed by 23:30<span class="note">this later night stays fixed every week</span></div></div>
+    </div>
+  </div>
+
+  <!-- SATURDAY -->
+  <div class="day" data-day="saturday">
+    <div class="day-head"><h2>Saturday</h2><span class="tag">Free — deep study + workout day · <span class="progress"></span></span></div>
+    <div class="blocks">
+      <div class="block b-prayer"><div class="time">early</div><div class="what"><b>Fajr</b><span class="note">alarm for the real time, pray, back to sleep if you want</span></div></div>
+      <div class="block b-routine"><div class="time">~08:30</div><div class="what">Wake, breakfast</div></div>
+      <div class="block b-move"><div class="time">09:00–10:00</div><div class="what"><b>Workout</b><span class="note">best slot of the week for a proper session</span></div></div>
+      <div class="block b-maths"><div class="time">10:30–12:00</div><div class="what"><b>Study block 1</b><span class="note">timed past paper — rotate subject weekly</span></div></div>
+      <div class="block b-prayer"><div class="time">12:00–13:00</div><div class="what">Dhuhr + lunch</div></div>
+      <div class="block b-chem"><div class="time">13:00–14:30</div><div class="what"><b>Study block 2</b><span class="note">timed past paper — second subject</span></div></div>
+      <div class="block b-free"><div class="time">14:30–15:30</div><div class="what">Free time</div></div>
+      <div class="block b-prayer"><div class="time">15:30–16:00</div><div class="what">Asr</div></div>
+      <div class="block b-free"><div class="time">16:00–18:00</div><div class="what">Free / family / hobbies</div></div>
+      <div class="block b-prayer"><div class="time">18:00–19:00</div><div class="what">Maghrib + dinner</div></div>
+      <div class="block b-free"><div class="time">19:00–20:00</div><div class="what">Optional light review</div></div>
+      <div class="block b-prayer"><div class="time">20:00–20:30</div><div class="what">Isha</div></div>
+      <div class="block b-free"><div class="time">20:30–22:30</div><div class="what">Relax, bed by ~22:30</div></div>
+    </div>
+  </div>
+
+  <!-- SUNDAY -->
+  <div class="day" data-day="sunday">
+    <div class="day-head"><h2>Sunday</h2><span class="tag">Free — organise + reset for the week · <span class="progress"></span></span></div>
+    <div class="blocks">
+      <div class="block b-prayer"><div class="time">early</div><div class="what"><b>Fajr</b><span class="note">alarm for the real time, pray, back to sleep if you want</span></div></div>
+      <div class="block b-routine"><div class="time">~08:30</div><div class="what">Wake, breakfast</div></div>
+      <div class="block b-econ"><div class="time">09:00–10:30</div><div class="what"><b>Study: file &amp; organise</b><span class="note">sort notes into topic folders, update summary sheets</span></div></div>
+      <div class="block b-maths"><div class="time">10:30–11:30</div><div class="what"><b>Study: weakest topic</b><span class="note">third subject in the rotation</span></div></div>
+      <div class="block b-prayer"><div class="time">12:00–13:00</div><div class="what">Dhuhr + lunch</div></div>
+      <div class="block b-move"><div class="time">13:00–14:00</div><div class="what"><b>Workout</b> (lighter — recovery)</div></div>
+      <div class="block b-free"><div class="time">14:00–16:00</div><div class="what">Free time / rest</div></div>
+      <div class="block b-prayer"><div class="time">16:00–16:30</div><div class="what">Asr</div></div>
+      <div class="block b-free"><div class="time">16:30–18:00</div><div class="what">Free</div></div>
+      <div class="block b-prayer"><div class="time">18:00–19:00</div><div class="what">Maghrib + dinner</div></div>
+      <div class="block b-routine"><div class="time">19:00–19:30</div><div class="what">Pack bag, plan Monday</div></div>
+      <div class="block b-prayer"><div class="time">19:30–20:00</div><div class="what">Isha</div></div>
+      <div class="block b-free"><div class="time">20:00–21:30</div><div class="what">Wind down early — reset for 05:30 Monday</div></div>
+    </div>
+  </div>
+
+  <footer>
+    Weekly study total: roughly 10–12 hours of focused work outside college, plus the free periods already built into your college day. Review every 2–3 weeks and shift the balance toward whichever subject needs it most.
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'yaqoob-timetable-state-v1';
+  let state = { checks: {}, edits: {} };
+  let saveTimer = null;
+  const statusEl = document.getElementById('saveStatus');
+
+  const PRAYER_NAMES = ['Fajr','Dhuhr','Asr','Maghrib','Isha'];
+  // Fajr is always AM; the other four are always PM in the UK, all year round —
+  // used only to sort "which prayer is next", not to change what's displayed.
+  const PRAYER_IS_PM = [false, true, true, true, true];
+
+  // Filled in once SLIC's times load successfully; the live countdown bar reads from this.
+  let prayerMinsList = null;
+
+  function renderPrayerTimes(rawTimes, label){
+    const now = new Date();
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+
+    const minsList = rawTimes.map((t, i) => {
+      let [h, m] = t.split(':').map(Number);
+      if(PRAYER_IS_PM[i] && h !== 12) h += 12;
+      return h * 60 + m;
+    });
+    prayerMinsList = minsList;
+
+    let nextIndex = -1;
+    for(let i = 0; i < minsList.length; i++){
+      if(minsList[i] > nowMins){ nextIndex = i; break; }
+    }
+
+    const grid = document.getElementById('prayerGrid');
+    grid.innerHTML = PRAYER_NAMES.map((name, i) => {
+      const isNext = i === nextIndex;
+      return '<div class="prayer-slot' + (isNext ? ' next' : '') + '">'
+        + '<div class="pname">' + name + '</div>'
+        + '<div class="ptime">' + rawTimes[i] + '</div>'
+        + '</div>';
+    }).join('');
+
+    document.getElementById('prayerLoc').textContent = label;
+  }
+
+  async function loadPrayerTimes(){
+    try{
+      // r.jina.ai fetches a page server-side and hands back readable text with
+      // open CORS headers — this is what lets a plain static site read SLIC's
+      // page at all, since slicmosque.org doesn't allow direct cross-site reads.
+      const res = await fetch('https://r.jina.ai/https://slicmosque.org/');
+      if(!res.ok) throw new Error('Proxy request failed: ' + res.status);
+      const text = await res.text();
+
+      const line = text.split('\n').find(l => /begins/i.test(l));
+      if(!line) throw new Error('Could not find the BEGINS row on the page');
+
+      const times = line.match(/\d{1,2}:\d{2}/g);
+      if(!times || times.length < 5) throw new Error('Could not parse 5 times from the row');
+
+      renderPrayerTimes(times.slice(0, 5), "South London Islamic Centre — Begins, today");
+    }catch(e){
+      console.error('SLIC prayer times fetch failed:', e);
+      document.getElementById('prayerLoc').textContent = "Couldn't load live SLIC times right now — refresh, or check slicmosque.org directly.";
+    }
+  }
+
+  function setStatus(text, saved){
+    statusEl.textContent = text;
+    statusEl.classList.toggle('saved', !!saved);
+  }
+
+  function queueSave(){
+    setStatus('saving…', false);
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try{
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        setStatus('saved on this device', true);
+      }catch(e){
+        console.error('Could not save:', e);
+        setStatus('could not save — your browser may be blocking storage', false);
+      }
+    }, 400);
+  }
+
+  function updateProgress(dayEl){
+    const blocks = dayEl.querySelectorAll('.block');
+    const done = dayEl.querySelectorAll('.block.done').length;
+    const tag = dayEl.querySelector('.progress');
+    if(tag) tag.textContent = done + '/' + blocks.length + ' done';
+  }
+
+  function formatCountdown(mins){
+    if(mins < 1) return 'now';
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if(h === 0) return m + 'm';
+    return h + 'h ' + m + 'm';
+  }
+
+  function tickClock(){
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    const ss = String(now.getSeconds()).padStart(2,'0');
+    const el = document.getElementById('clockValue');
+    if(el) el.textContent = hh + ':' + mm + ':' + ss;
+  }
+
+  function tickNextPrayer(){
+    const el = document.getElementById('nextPrayerValue');
+    if(!el) return;
+    if(!prayerMinsList){
+      el.textContent = 'loading…';
+      return;
+    }
+    const now = new Date();
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+    let nextIndex = -1;
+    for(let i = 0; i < prayerMinsList.length; i++){
+      if(prayerMinsList[i] > nowMins){ nextIndex = i; break; }
+    }
+    if(nextIndex === -1){
+      el.textContent = 'Isha passed — Fajr tomorrow';
+      return;
+    }
+    const diff = prayerMinsList[nextIndex] - nowMins;
+    el.textContent = PRAYER_NAMES[nextIndex] + ' in ' + formatCountdown(diff);
+  }
+
+  function tickNextTask(){
+    const el = document.getElementById('nextTaskValue');
+    if(!el) return;
+
+    const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    const now = new Date();
+    const todayName = dayNames[now.getDay()];
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+
+    const dayEl = document.querySelector('.day[data-day="' + todayName + '"]');
+    if(!dayEl){
+      el.textContent = '—';
+      return;
+    }
+
+    const blocks = Array.from(dayEl.querySelectorAll('.block'));
+    let best = null;
+
+    blocks.forEach(block => {
+      if(block.classList.contains('done')) return;
+      const timeEl = block.querySelector('.time');
+      const whatEl = block.querySelector('.what');
+      if(!timeEl) return;
+      const match = timeEl.textContent.match(/(\d{1,2}):(\d{2})/);
+      if(!match) return;
+      const mins = parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+      if(mins <= nowMins) return;
+      if(best === null || mins < best.mins){
+        const label = whatEl ? whatEl.textContent.trim().split('\n')[0].slice(0, 40) : 'task';
+        best = { mins, label };
+      }
+    });
+
+    if(!best){
+      el.textContent = 'All done for today 🎉';
+      return;
+    }
+    el.textContent = best.label + ' in ' + formatCountdown(best.mins - nowMins);
+  }
+
+  function startLiveBar(){
+    tickClock();
+    tickNextPrayer();
+    tickNextTask();
+    setInterval(tickClock, 1000);
+    setInterval(() => { tickNextPrayer(); tickNextTask(); }, 15000);
+  }
+
+  function init(){
+    loadPrayerTimes();
+    startLiveBar();
+
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        const parsed = JSON.parse(raw);
+        if(parsed && typeof parsed === 'object'){
+          state = { checks: parsed.checks || {}, edits: parsed.edits || {} };
+        }
+      }
+      setStatus('', false);
+    }catch(e){
+      // No saved state yet, or storage unavailable — that's fine.
+      setStatus('', false);
+    }
+
+    const days = document.querySelectorAll('.day');
+    days.forEach(dayEl => {
+      const dayName = dayEl.dataset.day || 'day';
+      const blocks = dayEl.querySelectorAll('.block');
+
+      blocks.forEach((block, i) => {
+        const id = dayName + '-' + i;
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'chk';
+        cb.setAttribute('aria-label', 'Mark as done');
+        if(state.checks[id]){
+          cb.checked = true;
+          block.classList.add('done');
+        }
+        cb.addEventListener('change', () => {
+          state.checks[id] = cb.checked;
+          block.classList.toggle('done', cb.checked);
+          updateProgress(dayEl);
+          queueSave();
+          tickNextTask();
+        });
+        block.insertBefore(cb, block.firstChild);
+
+        [['time', block.querySelector('.time')], ['what', block.querySelector('.what')]].forEach(([key, el]) => {
+          if(!el) return;
+          const editId = id + '-' + key;
+          el.contentEditable = 'true';
+          el.spellcheck = false;
+          if(state.edits[editId] !== undefined){
+            el.innerHTML = state.edits[editId];
+          }
+          el.addEventListener('blur', () => {
+            state.edits[editId] = el.innerHTML;
+            queueSave();
+          });
+          el.addEventListener('keydown', (ev) => {
+            if(ev.key === 'Enter' && key === 'time'){
+              ev.preventDefault();
+              el.blur();
+            }
+          });
+        });
+      });
+
+      updateProgress(dayEl);
+    });
+
+    const resetBtn = document.getElementById('resetBtn');
+    resetBtn.addEventListener('click', () => {
+      if(!confirm("Untick everything for a fresh week? Your edited wording stays as it is.")) return;
+      Object.keys(state.checks).forEach(k => { state.checks[k] = false; });
+      document.querySelectorAll('.block.done').forEach(b => b.classList.remove('done'));
+      document.querySelectorAll('.block .chk').forEach(c => { c.checked = false; });
+      days.forEach(updateProgress);
+      queueSave();
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+</body>
+</html>
