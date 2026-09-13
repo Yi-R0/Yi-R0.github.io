@@ -252,30 +252,9 @@
   @media(max-width:520px){
     .block{grid-template-columns:80px 1fr;}
   }
-
-  /* --- Floating quick-nav buttons --- */
-  .float-nav{
-    position:fixed;
-    bottom:20px;right:20px;
-    display:flex;flex-direction:column;gap:10px;
-    z-index:30;
-  }
-  .float-nav button{
-    width:46px;height:46px;border-radius:50%;
-    border:none;background:var(--ink);color:#fff;
-    font-size:1.15rem;cursor:pointer;
-    box-shadow:0 4px 12px rgba(27,36,57,0.3);
-  }
-  .float-nav button:hover{background:#28324d;}
 </style>
 </head>
 <body>
-
-<div class="float-nav">
-  <button id="gotoTodayBtn" type="button" title="Jump to today">📅</button>
-  <button id="gotoTopBtn" type="button" title="Back to top">↑</button>
-</div>
-
 <div class="wrap">
 
   <div class="live-bar" id="liveBar">
@@ -659,29 +638,9 @@
     setInterval(() => { tickNextPrayer(); tickNextTask(); }, 15000);
   }
 
-
-  function todayDayName(){
-    const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
-    return dayNames[new Date().getDay()];
-  }
-
-  // --- Floating quick-nav buttons ---
-  function initFloatNav(){
-    const topBtn = document.getElementById('gotoTopBtn');
-    const todayBtn = document.getElementById('gotoTodayBtn');
-    if(topBtn) topBtn.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-    if(todayBtn) todayBtn.addEventListener('click', () => {
-      const dayEl = document.querySelector('.day[data-day="' + todayDayName() + '"]');
-      if(dayEl) dayEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  }
-
   function init(){
     loadPrayerTimes();
     startLiveBar();
-    initFloatNav();
 
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
